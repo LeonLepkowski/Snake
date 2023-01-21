@@ -4,15 +4,37 @@
 #include <time.h>
 #include <unistd.h>
 
-#define HEIGHT 23
-#define WIDTH 79
+#define HEIGHT 25
+#define WIDTH 80
 
 int movement(int* snakeX, int* snakeY, int moveX, int moveY, int speed, WINDOW* win)
 {
     *snakeX = *snakeX + moveX;
     *snakeY = *snakeY + moveY;
     mvwprintw(win, *snakeY, *snakeX, "0");
-    usleep(100000 * speed);
+    int a = 100000 * speed;
+    if (moveX == 0)
+        a *= 1.5;
+    usleep(a);
+}
+
+void apple_gen(int* appleX, int* appleY, int* apple)
+{
+    if (*apple) {
+        srand(time(0));
+        *appleX = (rand() % WIDTH) + 1;
+        *appleY = (rand() % HEIGHT) + 2;
+        *apple = 0;
+    }
+    mvprintw(*appleY, *appleX, "@");
+}
+
+void eating_apple(int snakeX, int snakeY, int appleX, int appleY, int* apple, int* score)
+{
+    if (snakeX + 1 == appleX && snakeY + 1 == appleY) {
+        *apple = 1;
+        *score += 1;
+    }
 }
 
 int kbhit(void)
@@ -36,9 +58,9 @@ int kbhit(void)
 
 int game_border(int snakeX, int snakeY)
 {
-    if (snakeX < 1 || snakeX > WIDTH-2) {
+    if (snakeX < 1 || snakeX > WIDTH - 2) {
         return 1;
-    } else if (snakeY < 1 || snakeY > HEIGHT-2) {
+    } else if (snakeY < 1 || snakeY > HEIGHT - 2) {
         return 1;
     }
     return 0;
@@ -54,6 +76,9 @@ int main()
     int moveX = 1;
     int moveY = 0;
     int speed = 1;
+    int appleX = 0;
+    int appleY = 0;
+    int apple = 1;
 
     for (int i = 0; i < 100; i++) {
         for (int j = 0; j < 2; j++) {
@@ -77,7 +102,9 @@ int main()
         box(win, 0, 0);
         mvprintw(0, 0, "Score: %i", score);
         refresh();
+        apple_gen(&appleX, &appleY, &apple);
         movement(&snakeX, &snakeY, moveX, moveY, speed, win);
+        eating_apple(snakeX, snakeY, appleX, appleY, &apple, &score);
         wrefresh(win);
 
         if (kbhit()) {
@@ -99,7 +126,7 @@ int main()
         }
     }
 
-    mvprintw(12, 30, "game over!");
+    mvprintw(12, 35, "GAME OVER!");
     getch();
     endwin();
 }

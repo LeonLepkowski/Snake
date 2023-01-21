@@ -4,37 +4,66 @@
 #include <time.h>
 #include <unistd.h>
 
-#define HEIGHT 25
+#define HIGHT 25
 #define WIDTH 80
 
-int movement(int* snakeX, int* snakeY, int moveX, int moveY, int speed, WINDOW* win)
+int movement(int* snake_body, int moveX, int moveY, int speed, int lenght, WINDOW* win)
 {
-    *snakeX = *snakeX + moveX;
-    *snakeY = *snakeY + moveY;
-    mvwprintw(win, *snakeY, *snakeX, "0");
-    int a = 100000 * speed;
-    if (moveX == 0)
-        a *= 1.5;
-    usleep(a);
+    int oldX, oldY;
+    int curX = *snake_body;
+    int curY = *(snake_body + 1);
+    int newX = curX + moveX;
+    int newY = curY + moveY;
+
+    *(snake_body) = newX;
+    *(snake_body + 1) = newY;
+    mvwprintw(win, newY, newX, "0");
+
+    for (int i = 2; i < lenght * 2; i += 2) {
+        oldX = curX;
+        oldY = curY;
+        curX = *(snake_body + i);
+        curY = *(snake_body + i + 1);
+        newX = oldX;
+        newY = oldY;
+        *(snake_body + i) = newX;
+        *(snake_body + i + 1) = newY;
+
+        mvwprintw(win, newY, newX, "0");
+    }
+
+    if (moveY != 0) {
+        usleep(500000 / speed);
+    }
+    usleep(1000000 / speed);
 }
 
 void apple_gen(int* appleX, int* appleY, int* apple)
 {
+    int w = WIDTH - 1;
+    int h = HIGHT - 2;
     if (*apple) {
         srand(time(0));
-        *appleX = (rand() % WIDTH) + 1;
-        *appleY = (rand() % HEIGHT) + 2;
+        *appleX = (rand() % w) + 1;
+        *appleY = (rand() % h) + 2;
         *apple = 0;
     }
     mvprintw(*appleY, *appleX, "@");
 }
-
-void eating_apple(int snakeX, int snakeY, int appleX, int appleY, int* apple, int* score)
+void eating_apple(int* snake_body, int appleX, int appleY, int* apple, int* length)
 {
-    if (snakeX + 1 == appleX && snakeY + 1 == appleY) {
+    int x = *snake_body;
+    int y = *(snake_body + 1);
+    if (x == appleX-1 && y == appleY-1) {
         *apple = 1;
-        *score += 1;
+        *length += 1;
+        int snakeLen = *length;
+        int lastX = *(snake_body + snakeLen * 2 - 2);
+        int lastY = *(snake_body + snakeLen * 2 - 2 + 1);
+        *(snake_body + snakeLen * 2) = lastX;
+        *(snake_body + snakeLen * 2 + 1) = lastY;
     }
+    mvprintw(0, 0, "Snake length: %d", *length);
 }
 
 int kbhit(void)
@@ -56,11 +85,14 @@ int kbhit(void)
     return 0;
 }
 
-int game_border(int snakeX, int snakeY)
+int game_border(int* snake_body)
 {
-    if (snakeX < 1 || snakeX > WIDTH - 2) {
+    int x = *snake_body;
+    int y = *(snake_body + 1);
+
+    if (x < 1 || x > WIDTH - 2) {
         return 1;
-    } else if (snakeY < 1 || snakeY > HEIGHT - 2) {
+    } else if (y < 1 || y > HIGHT - 2) {
         return 1;
     }
     return 0;
@@ -69,17 +101,6 @@ int game_border(int snakeX, int snakeY)
 int main()
 {
     int snake_body[100][2];
-    int score = 0;
-    int snakeX = 1;
-    int snakeY = 1;
-    int action;
-    int moveX = 1;
-    int moveY = 0;
-    int speed = 1;
-    int appleX = 0;
-    int appleY = 0;
-    int apple = 1;
-
     for (int i = 0; i < 100; i++) {
         for (int j = 0; j < 2; j++) {
             snake_body[i][j] = 0;
@@ -88,23 +109,33 @@ int main()
     snake_body[0][0] = 3;
     snake_body[0][1] = 3;
 
+    int action;
+    int moveX = 1;
+    int moveY = 0;
+    int speed = 10;
+    int appleX = 0;
+    int appleY = 0;
+    int apple = 1;
+    int length = 5;
+
     initscr();
     curs_set(false);
     noecho();
 
-    WINDOW* win = newwin(HEIGHT, WIDTH, 1, 1);
+    WINDOW* win = newwin(HIGHT, WIDTH, 1, 1);
     keypad(win, TRUE);
     box(win, 0, 0);
     wrefresh(win);
 
-    while (!game_border(snakeX, snakeY)) {
+    while (!game_border(&snake_body[0][0])) {
         werase(win);
         box(win, 0, 0);
-        mvprintw(0, 0, "Score: %i", score);
         refresh();
         apple_gen(&appleX, &appleY, &apple);
-        movement(&snakeX, &snakeY, moveX, moveY, speed, win);
-        eating_apple(snakeX, snakeY, appleX, appleY, &apple, &score);
+
+        movement(&snake_body[0][0], moveX, moveY, speed, length, win);
+        eating_apple(&snake_body[0][0], appleX, appleY, &apple, &length);
+
         wrefresh(win);
 
         if (kbhit()) {

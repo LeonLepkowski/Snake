@@ -53,7 +53,7 @@ int main()
     int action;
     int moveX = 1;
     int moveY = 0;
-    int speed = 3;
+    int speed = 1;
 
     for (int i = 0; i < 100; i++) {
         for (int j = 0; j < 2; j++) {
@@ -75,23 +75,24 @@ int main()
     while (!game_border(snakeX, snakeY)) {
         werase(win);
         box(win, 0, 0);
-        // mvprintw(0, 1, "Score: %i", score);
+        mvprintw(0, 0, "Score: %i", score);
+        refresh();
         movement(&snakeX, &snakeY, moveX, moveY, speed, win);
         wrefresh(win);
 
         if (kbhit()) {
             int action = wgetch(win);
 
-            if (action == KEY_LEFT) {
+            if (action == KEY_LEFT && moveX != 1) {
                 moveX = -1;
                 moveY = 0;
-            } else if (action == KEY_RIGHT) {
+            } else if (action == KEY_RIGHT && moveX != -1) {
                 moveX = 1;
                 moveY = 0;
-            } else if (action == KEY_UP) {
+            } else if (action == KEY_UP && moveY != 1) {
                 moveX = 0;
                 moveY = -1;
-            } else if (action == KEY_DOWN) {
+            } else if (action == KEY_DOWN && moveY != -1) {
                 moveX = 0;
                 moveY = 1;
             }

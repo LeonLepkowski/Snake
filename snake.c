@@ -54,7 +54,7 @@ void eating_apple(int* snake_body, int appleX, int appleY, int* apple, int* leng
 {
     int x = *snake_body;
     int y = *(snake_body + 1);
-    if (x == appleX-1 && y == appleY-1) {
+    if (x == appleX - 1 && y == appleY - 1) {
         *apple = 1;
         *length += 1;
         int snakeLen = *length;
@@ -85,7 +85,7 @@ int kbhit(void)
     return 0;
 }
 
-int game_border(int* snake_body)
+int game_border(int* snake_body, int length)
 {
     int x = *snake_body;
     int y = *(snake_body + 1);
@@ -95,7 +95,36 @@ int game_border(int* snake_body)
     } else if (y < 1 || y > HIGHT - 2) {
         return 1;
     }
+
+    for (size_t i = 2; i < length * 2 + 2; i += 2) {
+        if (x == *(snake_body + i) && y == *(snake_body + i + 1)) {
+            return 1;
+        }
+    }
+
     return 0;
+}
+
+int highscore(int length)
+{
+    FILE* file;
+    file = fopen("highscore.txt", "r");
+
+    char text[100];
+    fscanf(file, "%s", text);
+    printf("%s\n", text);
+    int number = atoi(text);
+    fclose(file);
+
+    file = fopen("highscore.txt", "w");
+    if (number < length) {
+        fprintf(file, "%i", length);
+    } else {
+        fprintf(file, "%i", number);
+    }
+    fclose(file);
+
+    return (length >= number) ? length : number;
 }
 
 int main()
@@ -127,7 +156,10 @@ int main()
     box(win, 0, 0);
     wrefresh(win);
 
-    while (!game_border(&snake_body[0][0])) {
+    int hscore = highscore(length);
+    mvprintw(0, 30, "Highscore: %i", hscore);
+
+    while (!game_border(&snake_body[0][0], length)) {
         werase(win);
         box(win, 0, 0);
         refresh();
@@ -158,6 +190,15 @@ int main()
     }
 
     mvprintw(12, 35, "GAME OVER!");
-    getch();
+
+    if (length >= hscore) {
+        mvprintw(13, 35, "New highscore: %i", length);
+    } else {
+        mvprintw(13, 35, "Your score: %i", length);
+    }
+    int u = ' ';
+    while (u != '\n') {
+        u = getch();
+    }
     endwin();
 }

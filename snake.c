@@ -1,9 +1,9 @@
 #include <ncurses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
-#include <string.h>
 
 #define HIGHT 25
 #define WIDTH 80
@@ -110,9 +110,6 @@ int game_border(int* snake_body, int length)
     return 0;
 }
 
-
-
-
 void options(int* speed, int* difficulty)
 {
     int yMAX, xMAX;
@@ -130,9 +127,9 @@ void options(int* speed, int* difficulty)
         while (1) {
             box(optionwin, 0, 0);
             for (int i = 0; i < 4; i++) {
-                if(*difficulty == i) {
+                if (*difficulty == i) {
                     attron(COLOR_PAIR(2));
-                    mvprintw(yMAX/2 - 4 + i, xMAX/2 - 6, ">");
+                    mvprintw(yMAX / 2 - 4 + i, xMAX / 2 - 6, ">");
                     attroff(COLOR_PAIR(2));
                     refresh();
                 }
@@ -181,12 +178,6 @@ void options(int* speed, int* difficulty)
     }
 }
 
-
-
-
-
-
-
 int highscore(int length)
 {
     FILE* file;
@@ -208,113 +199,132 @@ int highscore(int length)
     return (length >= number) ? length : number;
 }
 
+void title_name(int xMAX)
+{
+    attron(COLOR_PAIR(1));
+    mvprintw(4, xMAX / 2 - 16, "   _____                __       ");
+    mvprintw(5, xMAX / 2 - 16, "  / ___/ ____   ____ _ / /__ ___ ");
+    mvprintw(6, xMAX / 2 - 16, "  \\__ \\ / __ \\ / __ `// //_// _ \\");
+    mvprintw(7, xMAX / 2 - 16, " ___/ // / / // /_/ // ,<  /  __/");
+    mvprintw(8, xMAX / 2 - 16, "/____//_/ /_/ \\__,_//_/|_| \\___/ ");
+    attroff(COLOR_PAIR(1));
+    refresh();
+}
+
 int main()
 {
-    int snake_body[100][2];
-    for (int i = 0; i < 100; i++) {
-        for (int j = 0; j < 2; j++) {
-            snake_body[i][j] = 0;
-        }
+int snake_body[100][2];
+for (int i = 0; i < 100; i++) {
+    for (int j = 0; j < 2; j++) {
+        snake_body[i][j] = 0;
     }
-    snake_body[0][0] = 3;
-    snake_body[0][1] = 3;
+}
+snake_body[0][0] = 3;
+snake_body[0][1] = 3;
 
-    int action;
-    int moveX = 1;
-    int moveY = 0;
-    int speed = 20;
-    int appleX = 0;
-    int appleY = 0;
-    int apple = 1;
-    int length = 5;
+int action;
+int moveX = 1;
+int moveY = 0;
+int speed = 10;
+int appleX = 0;
+int appleY = 0;
+int apple = 1;
+int length = 5;
 
-    initscr();
-    curs_set(false);
-    noecho();
+initscr();
+curs_set(false);
+noecho();
 
-    start_color();
-    init_pair(1, COLOR_GREEN, A_NORMAL);
-    init_pair(2, COLOR_RED, A_NORMAL);
+start_color();
+init_pair(1, COLOR_GREEN, A_NORMAL);
+init_pair(2, COLOR_RED, A_NORMAL);
 
-    WINDOW* win = newwin(HIGHT, WIDTH, 1, 1);
-    keypad(win, TRUE);
-    box(win, 0, 0);
-    wrefresh(win);
+WINDOW* win = newwin(HIGHT, WIDTH, 1, 1);
+keypad(win, TRUE);
+box(win, 0, 0);
+wrefresh(win);
 
-    int hscore = highscore(length);
-    mvprintw(0, 30, "Highscore: %i", hscore);
+int hscore = highscore(length);
 
+int yMAX, xMAX;
+getmaxyx(stdscr, yMAX, xMAX);
 
+WINDOW* menuwin = newwin(5, 12, yMAX / 2 - 5, xMAX / 2 - 5);
+box(menuwin, 0, 0);
+refresh();
+wrefresh(menuwin);
 
-    int yMAX, xMAX;
-    getmaxyx(stdscr, yMAX, xMAX);
+keypad(menuwin, true);
+char* choices[] = { "New game", "Options", "Exit game" };
+int choice;
+int highlight = 0;
+int difficulty = 0;
 
-    WINDOW* menuwin = newwin(5, 12, yMAX / 2 - 5, xMAX / 2 - 5);
-    box(menuwin, 0, 0);
-    refresh();
-    wrefresh(menuwin);
-
-    keypad(menuwin, true);
-    char* choices[] = { "New game", "Options", "Exit game" };
-    int choice;
-    int highlight = 0;
-    int difficulty = 0;
-
-while(1) {
+while (1) {
     while (1) {
-            while (1) {
-                box(menuwin, 0, 0);
-                for (int i = 0; i < 3; i++) {
-                    erase();
-                    // wrefresh(menuwin);
-                    if (i == highlight)
-                        wattron(menuwin, A_REVERSE);
-                    mvwprintw(menuwin, i + 1, 1, choices[i]);
-                    wattroff(menuwin, A_REVERSE);
-                }
-                choice = wgetch(menuwin);
-                switch (choice) {
-                case KEY_UP:
-                    highlight--;
-                    if (highlight == -1)
-                        highlight = 0;
-                    break;
-                case KEY_DOWN:
-                    highlight++;
-                    if (highlight == 3)
-                        highlight = 2;
-                    break;
-                default:
-                    break;
-                }
-                if (choice == 10)
-                    break;
-            }
-            printw("Your choice was: %s\n", choices[highlight]);
-
-            if (strcmp(choices[highlight], "Options") == 0) {
+        while (1) {
+            box(menuwin, 0, 0);
+            title_name(xMAX);
+            for (int i = 0; i < 3; i++) {
                 erase();
-                options(&speed, &difficulty);
-
+                // wrefresh(menuwin);
+                if (i == highlight)
+                    wattron(menuwin, A_REVERSE);
+                mvwprintw(menuwin, i + 1, 1, choices[i]);
+                wattroff(menuwin, A_REVERSE);
             }
-            refresh();
-            if (strcmp(choices[highlight], "Exit game") == 0) {
-                endwin();
-                return 0;
-            }
-
-            if (strcmp(choices[highlight], "New game") == 0) {
+            choice = wgetch(menuwin);
+            switch (choice) {
+            case KEY_UP:
+                highlight--;
+                if (highlight == -1)
+                    highlight = 0;
+                break;
+            case KEY_DOWN:
+                highlight++;
+                if (highlight == 3)
+                    highlight = 2;
+                break;
+            default:
                 break;
             }
+            if (choice == 10)
+                break;
         }
-        erase();
+        if (strcmp(choices[highlight], "Options") == 0) {
+            erase();
+            options(&speed, &difficulty);
+        }
+        refresh();
+        if (strcmp(choices[highlight], "Exit game") == 0) {
+            endwin();
+            return 0;
+        }
 
+        if (strcmp(choices[highlight], "New game") == 0) {
+            for (int i = 0; i < 100; i++) {
+                for (int j = 0; j < 2; j++) {
+                    snake_body[i][j] = 0;
+                }
+            }
+            snake_body[0][0] = 3;
+            snake_body[0][1] = 3;
 
-
-    
+            action;
+            moveX = 1;
+            moveY = 0;
+            appleX = 0;
+            appleY = 0;
+            apple = 1;
+            length = 5;
+            break;
+        }
+    }
+    erase();
 
     while (!game_border(&snake_body[0][0], length)) {
         werase(win);
+        mvprintw(0, 30, "Highscore: %i", hscore);
         box(win, 0, 0);
         refresh();
         apple_gen(&appleX, &appleY, &apple);
@@ -355,6 +365,8 @@ while(1) {
     while (u != '\n') {
         u = getch();
     }
+    erase();
+    clear();
     endwin();
 }
 }

@@ -17,8 +17,9 @@ int movement(int* snake_body, int moveX, int moveY, int speed, int lenght, WINDO
 
     *(snake_body) = newX;
     *(snake_body + 1) = newY;
-    mvwprintw(win, newY, newX, "0");
+    wattron(win, COLOR_PAIR(1));
 
+    mvwprintw(win, newY, newX, "0");
     for (int i = 2; i < lenght * 2; i += 2) {
         oldX = curX;
         oldY = curY;
@@ -28,9 +29,10 @@ int movement(int* snake_body, int moveX, int moveY, int speed, int lenght, WINDO
         newY = oldY;
         *(snake_body + i) = newX;
         *(snake_body + i + 1) = newY;
-
         mvwprintw(win, newY, newX, "0");
     }
+
+    wattroff(win, COLOR_PAIR(1));
 
     if (moveY != 0) {
         usleep(500000 / speed);
@@ -48,7 +50,9 @@ void apple_gen(int* appleX, int* appleY, int* apple)
         *appleY = (rand() % h) + 2;
         *apple = 0;
     }
+    attron(COLOR_PAIR(2));
     mvprintw(*appleY, *appleX, "@");
+    attroff(COLOR_PAIR(2));
 }
 void eating_apple(int* snake_body, int appleX, int appleY, int* apple, int* length)
 {
@@ -151,6 +155,10 @@ int main()
     curs_set(false);
     noecho();
 
+    start_color();
+    init_pair(1, COLOR_GREEN, A_NORMAL);
+    init_pair(2, COLOR_RED, A_NORMAL);
+
     WINDOW* win = newwin(HIGHT, WIDTH, 1, 1);
     keypad(win, TRUE);
     box(win, 0, 0);
@@ -196,6 +204,7 @@ int main()
     } else {
         mvprintw(13, 35, "Your score: %i", length);
     }
+    highscore(length);
     int u = ' ';
     while (u != '\n') {
         u = getch();

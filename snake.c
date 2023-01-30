@@ -3,6 +3,7 @@
 #include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 
 #define HIGHT 25
 #define WIDTH 80
@@ -42,11 +43,11 @@ int movement(int* snake_body, int moveX, int moveY, int speed, int lenght, WINDO
 
 void apple_gen(int* appleX, int* appleY, int* apple)
 {
-    int w = WIDTH - 1;
+    int w = WIDTH - 2;
     int h = HIGHT - 2;
     if (*apple) {
         srand(time(0));
-        *appleX = (rand() % w) + 1;
+        *appleX = (rand() % w) + 2;
         *appleY = (rand() % h) + 2;
         *apple = 0;
     }
@@ -109,6 +110,83 @@ int game_border(int* snake_body, int length)
     return 0;
 }
 
+
+
+
+void options(int* speed, int* difficulty)
+{
+    int yMAX, xMAX;
+    getmaxyx(stdscr, yMAX, xMAX);
+    WINDOW* optionwin = newwin(6, 14, yMAX / 2 - 5, xMAX / 2 - 5);
+    box(optionwin, 0, 0);
+    refresh();
+    wrefresh(optionwin);
+
+    keypad(optionwin, true);
+    char* choices[] = { "Beginner", "Intermediate", "Expert", "Return" };
+    int choice;
+    int highlight = 0;
+    while (1) {
+        while (1) {
+            box(optionwin, 0, 0);
+            for (int i = 0; i < 4; i++) {
+                if(*difficulty == i) {
+                    attron(COLOR_PAIR(2));
+                    mvprintw(yMAX/2 - 4 + i, xMAX/2 - 6, ">");
+                    attroff(COLOR_PAIR(2));
+                    refresh();
+                }
+                if (i == highlight)
+                    wattron(optionwin, A_REVERSE);
+                mvwprintw(optionwin, i + 1, 1, choices[i]);
+                wattroff(optionwin, A_REVERSE);
+            }
+            choice = wgetch(optionwin);
+            switch (choice) {
+            case KEY_UP:
+                highlight--;
+                if (highlight == -1)
+                    highlight = 0;
+                break;
+            case KEY_DOWN:
+                highlight++;
+                if (highlight == 4)
+                    highlight = 3;
+                break;
+            default:
+                break;
+            }
+            if (choice == 10)
+                break;
+        }
+        if (strcmp(choices[highlight], "Beginner") == 0) {
+            *difficulty = 0;
+            *speed = 10;
+        }
+
+        if (strcmp(choices[highlight], "Intermediate") == 0) {
+            *difficulty = 1;
+            *speed = 20;
+        }
+
+        if (strcmp(choices[highlight], "Expert") == 0) {
+            *difficulty = 2;
+            *speed = 30;
+        }
+        if (strcmp(choices[highlight], "Return") == 0) {
+            clear();
+            return;
+        }
+        erase();
+    }
+}
+
+
+
+
+
+
+
 int highscore(int length)
 {
     FILE* file;
@@ -116,7 +194,6 @@ int highscore(int length)
 
     char text[100];
     fscanf(file, "%s", text);
-    printf("%s\n", text);
     int number = atoi(text);
     fclose(file);
 
@@ -145,7 +222,7 @@ int main()
     int action;
     int moveX = 1;
     int moveY = 0;
-    int speed = 10;
+    int speed = 20;
     int appleX = 0;
     int appleY = 0;
     int apple = 1;
@@ -166,6 +243,75 @@ int main()
 
     int hscore = highscore(length);
     mvprintw(0, 30, "Highscore: %i", hscore);
+
+
+
+    int yMAX, xMAX;
+    getmaxyx(stdscr, yMAX, xMAX);
+
+    WINDOW* menuwin = newwin(5, 12, yMAX / 2 - 5, xMAX / 2 - 5);
+    box(menuwin, 0, 0);
+    refresh();
+    wrefresh(menuwin);
+
+    keypad(menuwin, true);
+    char* choices[] = { "New game", "Options", "Exit game" };
+    int choice;
+    int highlight = 0;
+    int difficulty = 0;
+
+while(1) {
+    while (1) {
+            while (1) {
+                box(menuwin, 0, 0);
+                for (int i = 0; i < 3; i++) {
+                    erase();
+                    // wrefresh(menuwin);
+                    if (i == highlight)
+                        wattron(menuwin, A_REVERSE);
+                    mvwprintw(menuwin, i + 1, 1, choices[i]);
+                    wattroff(menuwin, A_REVERSE);
+                }
+                choice = wgetch(menuwin);
+                switch (choice) {
+                case KEY_UP:
+                    highlight--;
+                    if (highlight == -1)
+                        highlight = 0;
+                    break;
+                case KEY_DOWN:
+                    highlight++;
+                    if (highlight == 3)
+                        highlight = 2;
+                    break;
+                default:
+                    break;
+                }
+                if (choice == 10)
+                    break;
+            }
+            printw("Your choice was: %s\n", choices[highlight]);
+
+            if (strcmp(choices[highlight], "Options") == 0) {
+                erase();
+                options(&speed, &difficulty);
+
+            }
+            refresh();
+            if (strcmp(choices[highlight], "Exit game") == 0) {
+                endwin();
+                return 0;
+            }
+
+            if (strcmp(choices[highlight], "New game") == 0) {
+                break;
+            }
+        }
+        erase();
+
+
+
+    
 
     while (!game_border(&snake_body[0][0], length)) {
         werase(win);
@@ -210,4 +356,5 @@ int main()
         u = getch();
     }
     endwin();
+}
 }

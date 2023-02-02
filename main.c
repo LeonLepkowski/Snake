@@ -146,10 +146,10 @@ int main()
 
         if (length >= hscore) {
             mvprintw(13, 35, "New highscore: %i", length);
+            hscore = highscore(length);
         } else {
             mvprintw(13, 35, "Your score: %i", length);
         }
-        highscore(length);
         int u = ' ';
         while (u != '\n') {
             u = getch();
